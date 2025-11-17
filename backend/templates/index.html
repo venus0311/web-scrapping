@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+  <title>New Contacts Tool</title>
+  <!-- <link rel="stylesheet" href="/static/styles.css"> -->
+  <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"> -->
+
+  <!-- Select2 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- Select2 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+  <!-- <script src="/static/script.js" defer></script> -->
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <link rel="stylesheet" href="/static/styles.css?v={{ cache_bust }}">
+  <script src="/static/script.js?v={{ cache_bust }}" defer></script>
+
+</head>
+
+<body>
+
+    <h3 class="page-title">New Contacts Tool</h3>
+  
+    <div class="container">
+
+        <!-- FORM -->
+
+        <div class="form-container">
+
+            <!-- <form id="processForm" method="post" action="/ai/clean-input"> -->
+              <form id="processForm">
+
+              <!-- Radio buttons -->
+              <span class="rad_but_title">Select type of process:</span>
+  
+                <div class="radio_buttons_container">
+                    <div class="radio_buttons_sub_box">
+                      <label class="rad_but_label">
+                        <input type="radio" name="process_type" value="search_by_domain" checked>
+                        Search by domains
+                      </label>
+                      
+                      <label class="rad_but_label">
+                        <input type="radio" name="process_type" value="search_by_name">
+                        Search by names
+                      </label>
+
+                      <label class="rad_but_label">
+                        <input type="radio" name="process_type" value="search_mixed">
+                        Mixed
+                      </label>
+                    </div>
+                  
+                    <!-- <div class="radio_buttons_sub_box">
+                      <label class="rad_but_label">
+                        <input type="radio" name="process_type" value="search_from_zero">
+                        Search from zero
+                      </label>
+        
+                      <label class="rad_but_label">
+                        <input type="radio" name="process_type" value="search_mixed">
+                        Mixed
+                      </label>
+                    </div> -->
+                </div>
+
+              <!-- Google Sheet URLs -->
+                <label class="input_label" for="sheet_url">Google Sheet URL:</label>
+                <input class="url_input" type="text" id="sheet_url" name="sheet_url" required>
+
+                {% if message %}
+                <div class="message-warning" id="error-msg">
+                  {{ message }}
+                </div>
+
+                <script>
+                  const msg = document.getElementById('error-msg');
+                
+                  // Remove query param from URL immediately
+                  const url = new URL(window.location);
+                  url.searchParams.delete('error');
+                  window.history.replaceState({}, '', url);
+                
+                  // Keep the message visible for 9 seconds, then remove
+                  setTimeout(() => {
+                    if (msg) msg.remove();
+                  }, 9000);
+                </script>
+                {% endif %}
+                
+                <!-- Switch -->
+                <div class="switch_box">
+                  <label class="switch">
+                    <input type="checkbox" id="company_geo_sw">
+                    <span class="slider round"></span>
+                  </label>
+                  <label class="switch_input_label">Match with company geolocation</label>
+                </div>
+              
+                <!-- URL's container -->
+                <div class="url_container">
+                  <div>
+                    <label class="input_label" for="sup_emails_sheet_url">Sup emails sheet url:</label>
+                    <input class="url_input_small" type="text" id="sup_emails_sheet_url" name="sup_emails_sheet_url">
+                  </div>
+                  <div>
+                    <label class="input_label" for="sup_domains_sheet_url">Sup domains sheet url:</label>
+                    <input class="url_input_small" type="text" id="sup_domains_sheet_url" name="sup_domains_sheet_url">
+                  </div>
+                  <div>
+                    <label class="input_label" for="sup_names_sheet_url">Sup names sheet url:</label>
+                    <input class="url_input_small" type="text" id="sup_names_sheet_url" name="sup_names_sheet_url">
+                  </div>
+                </div><br>
+          
+              <!-- Integers -->
+              <div class="integer_inputs_box">
+
+                <div class="integer_sub_box">
+                    <label class="input_label" for="goal">Goal:</label>
+                    <input class="integer_input" type="number" id="goal" name="goal" required><br><br>
+                </div>
+                <div class="integer_sub_box">
+                    <label class="input_label" for="lpc">LPC:</label>
+                    <input class="integer_input" type="number" id="lpc" name="lpc" required><br><br>
+                </div>
+
+              </div>
+
+              <!-- Size, Industry, revenue -->
+              <div class="integer_inputs_box">
+
+                <div class="integer_sub_box">
+                    <div class="label_and_info_box">
+                      <label class="input_label_with_info" for="size">Size:</label>
+                      <span class="info_icon" tabindex="0" aria-describedby="size_info" role="tooltip">ℹ️
+                        <span class="tooltip" id="size_info" role="tooltip">
+                          Examples: any, 400+, 60-900
+                        </span>
+                    </span>
+                    </div>
+                    <input class="integer_input" type="text" id="size" name="size" required><br><br>
+                </div>
+                <div class="integer_sub_box">
+                    <div class="label_and_info_box">
+                      <label class="input_label_with_info" for="revenue">Revenue:</label>
+                      <span class="info_icon" tabindex="0" aria-describedby="revenue_info" role="tooltip">ℹ️
+                        <span class="tooltip" id="revenue_info" role="tooltip">
+                          Examples: any, 5m, 80k, 1000-2b
+                        </span>
+                    </span>
+                    </div>
+                    <input class="integer_input" type="text" id="revenue" name="revenue" required><br><br>
+                </div>
+
+                <div class="integer_sub_box">
+                  <div class="label_and_info_box">
+                    <label class="input_label_with_info" for="industry">Industry:</label>
+                    <span class="info_icon" tabindex="0" aria-describedby="industry_info" role="tooltip">ℹ️
+                      <span class="tooltip" id="industry_info" role="tooltip">
+                        You can search, select industries, remove all/one
+                      </span>
+                  </span>
+                  </div>
+                 
+                  <select class="industry_input" id="industry" name="industry[]" multiple="multiple" required>
+                    <option value="all">All Industries</option>
+                    {% for industry in industries %}
+                      <option value="{{ industry }}">{{ industry }}</option>
+                    {% endfor %}
+                  </select>
+                
+                  <br><br>
+                </div>
+          
+              </div>
+          
+              <!-- Geo -->
+              <div class="integer_sub_box">
+                <div class="label_and_info_box">
+                  <label class="input_label_with_info" for="revenue">Geolocation:</label>
+                  <span class="info_icon" tabindex="0" aria-describedby="geo_info" role="tooltip">ℹ️
+                    <span class="tooltip" id="geo_info" role="tooltip">
+                      Select up to 20 geolocation.
+                    </span>
+                </span>
+                </div>
+                <select class="industry_input" id="country" name="country[]" multiple="multiple" required>
+                  <option value="select_all_countries">Any country</option>
+                  {% for country in all_countries %}
+                    <option value="{{ country }}">{{ country }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <br><br>
+          
+              <!-- ************************************* Requirements ************************************* -->
+
+              <div class="req_title_box">
+                <span class="req_input_label">Requirements</span>
+                <button type="submit" class="add_req_button">+</button>
+              </div>
+
+              <div>
+
+                <div class="requirements_box">
+
+                  <!-- Job Function -->
+                  <div class="integer_sub_box">
+                    <div class="label_and_info_box">
+                      <label class="input_label_with_info" for="functions">Function:</label>
+                      <span class="info_icon" tabindex="0" aria-describedby="functions_info" role="tooltip">ℹ️
+                        <span class="tooltip" id="functions_info" role="tooltip">
+                          You can search, select job functions, select any, remove all/one
+                        </span>
+                    </span>
+                    </div>
+  
+                    <select class="industry_input" id="function" name="function[]" multiple="multiple" required>
+                      <option value="any">Any Function</option>
+                      <option value="all">All Functions</option>
+                      {% for function in functions %}
+                        <option value="{{ function }}">{{ function }}</option>
+                      {% endfor %}
+                    </select>
+                  
+                    <br><br>
+                  </div>
+                  
+                  <!-- Job Level -->
+                  <div class="levels_box">
+                    
+                    <!-- First box -->
+                    <div>
+                      <div class="label_and_info_box_level">
+                        <label class="input_label_with_info" for="levels">Level:</label>
+                        <span class="info_icon" tabindex="0" aria-describedby="levels_info" role="tooltip">ℹ️
+                          <span class="tooltip" id="levels_info" role="tooltip">
+                            You can search, select job levels, select any, remove all/one
+                          </span>
+                      </span>
+                      </div>
+      
+                      <select class="first_level_select" id="level" name="level[]" multiple="multiple">
+                        <option value="all">All Levels</option>
+                        {% for level in levels %}
+                          <option value="{{ level }}">{{ level }}</option>
+                        {% endfor %}
+                      </select>
+                    
+                      <br><br>
+                    </div>
+                    
+                    <span>or</span>
+                    
+                    <!-- Second box -->
+                    <div class="level_range_box">
+                      
+                      <!-- 1 -->
+                      <div>
+                        <div class="label_and_info_box_level">
+                          <label class="input_label_with_info" for="levels">Level range/+:</label>
+                          <span class="info_icon" tabindex="0" aria-describedby="levels_info2" role="tooltip">ℹ️
+                            <span class="tooltip" id="levels_info2" role="tooltip">
+                              1. Select job level from - to for define range<br>
+                              2. Select first job level and leave empty second one for take higher levels
+                            </span>
+                        </span>
+                        </div>
+        
+                        <select class="first_level_select" id="level2" name="level2[]">
+                          {% for level in levels %}
+                            <option value="{{ level }}">{{ level }}</option>
+                          {% endfor %}
+                        </select>
+                      
+                        <br><br>
+                      </div>
+  
+                      <span>to</span>
+                      
+                      <!-- 2 -->
+                      <select class="first_level_select" id="level3" name="level3[]">
+                        {% for level in levels %}
+                          <option value="{{ level }}">{{ level }}</option>
+                        {% endfor %}
+                      </select>
+  
+                    </div>
+  
+                  </div>
+  
+                  <!-- Keywords -->
+                  <div class="keywords_sub_box">
+                    <div class="label_and_info_box">
+                      <label class="input_label" for="keywords">Keywords:</label>
+                      <span class="info_icon" tabindex="0" aria-describedby="size_info" role="tooltip">ℹ️
+                        <span class="tooltip" id="req_info" role="tooltip">
+                          Type keywords by dividing them with ",". (up to 20 keywords)
+                        </span>
+                    </span>
+                    </div>
+                    <textarea class="keywords_text_area" id="keywords" name="keywords"></textarea><br><br> 
+                  </div>
+  
+                </div>
+
+              </div>
+              
+              <label class="input_label" for="exclude_keywords">Exclude Keywords (optional):</label>
+              <textarea class="text_area" id="exclude_keywords" name="exclude_keywords"></textarea><br><br>
+
+              <!-- Submit -->
+              <button type="submit" class="start-button">Start</button>
+            </form>
+        </div>
+
+    
+    <!-- TABLE -->
+
+    <div class="table-container">
+
+        <h4 class="title">Processed Sheets</h4>
+
+        <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Name of the Sheet</th>
+                <th>Link of the Sheet</th>
+                <th>Status</th>
+                <th>Error Message</th> 
+                <th>Control</th>
+                <th>
+                  <button onclick="deleteAllEntries()" class="delete-btn" title="Delete All">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </th>
+              </tr>
+            </thead>
+            <tbody id="entries-table-body">
+              {% for entry in entries %}
+              <tr>
+                <td>{{ loop.index }}</td>
+                <td class="truncate-text" title="{{ entry.name }}">{{ entry.name }}</td>
+                <td>
+                  <a href="{{ entry.url }}" target="_blank" class="url-cell" title="{{ entry.url }}">
+                    {{ entry.url }}
+                  </a>
+                </td>
+                <td>
+                  <span class="{% if entry.status.lower() == 'done' %}status-done
+                               {% elif entry.status.lower() == 'failed' %}status-failed
+                               {% elif entry.status.lower() == 'stopped' %}status-stopped
+                               {% else %}status-progress{% endif %}">
+                    {{ entry.status }}
+                  </span>
+                </td>
+                <td title="{{ entry.error_message }}">{{ entry.error_message or '-' }}</td>
+                <td>
+                  {% if entry.status in ["Stopped", "Failed"] %}
+                    <form method="post" action="/resume/{{ entry.id }}" style="display:inline;">
+                      <button type="submit" class="resume-btn" title="Resume"><i class="fas fa-play"></i></button>
+                    </form>
+                    <!-- <button class="resume-btn" data-id="{{ entry.id }}" title="Resume">
+                      <i class="fas fa-play"></i>
+                    </button>                     -->
+                  {% elif entry.status == "In Progress" %}
+                    <form method="post" action="/stop/{{ entry.id }}" style="display:inline;">
+                      <button type="submit" class="stop-btn" title="Stop"><i class="fas fa-pause"></i></button>
+                    </form>
+                    <!-- <button class="stop-btn" data-id="{{ entry.id }}" title="Stop">
+                      <i class="fas fa-pause"></i>
+                    </button> -->
+                  {% else %}
+                    -
+                  {% endif %}
+                </td>
+                <td>
+                  <form method="post" action="/delete/{{ entry.id }}" style="display:inline;">
+                    <button type="submit" class="delete-btn" title="Delete"><i class="fas fa-trash"></i></button>
+                  </form>
+                  <!-- <button class="delete-btn" data-id="{{ entry.id }}" title="Delete">
+                    <i class="fas fa-trash"></i>
+                  </button> -->
+                </td>
+              </tr>
+              {% else %}
+              <tr><td colspan="8">No sheets processed yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+
+    </div>
+
+    </div>
+
+    <!-- Display data sent to request -->
+    <div class="processed-data-container" id="processedDataContainer" style="display: block;">
+      <h4 class="title">Processed Input Data</h4>
+      
+      <div class="processed-data-content">
+          <div class="data-section">
+              <h5>Job Levels</h5>
+              <div class="tags" id="jobLevelsTags"></div>
+          </div>
+          
+          <div class="data-section">
+              <h5>Job Functions</h5>
+              <div class="tags" id="jobFunctionsTags"></div>
+          </div>
+          
+          <div class="data-section">
+              <h5>Keywords</h5>
+              <div class="tags" id="keywordsTags"></div>
+          </div>
+          
+          <div class="data-section">
+              <h5>Geo Locations</h5>
+              <div class="tags" id="geoTags"></div>
+          </div>
+          
+          <div class="data-meta">
+              <small>Processed at: <span id="processedTimestamp"></span></small>
+              <small>Entry: <span id="processedEntryName"></span></small>
+          </div>
+      </div>
+    </div>
+
+
+</body>
+</html>
