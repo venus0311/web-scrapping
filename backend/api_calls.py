@@ -613,7 +613,7 @@ def get_search_results_by_serper(company_name, location="us"):
     return response.text
 
 
-def get_company_domain(api_key, linkedin_url):
+def get_company_info_from_prooflink(api_key, linkedin_url):
     """
     Get company domain using linkedin url.
     """
