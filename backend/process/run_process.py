@@ -334,7 +334,7 @@ def process_entry_logic(entry_id: str):
                         else:
                             linkedin_url = uniquq_links_and_names[unique_values[indx]]
 
-                            get_domain = get_company_domain(API_KEY, linkedin_url)
+                            get_domain = get_company_info_from_prooflink(API_KEY, linkedin_url).get("data")
                             
                             domain_from_name = get_domain.get("domain", None)
 

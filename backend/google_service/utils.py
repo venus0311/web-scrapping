@@ -49,9 +49,17 @@ def read_sup_names(sup_names_sheet_url):
             print("⚠️ No gid found in URL, defaulting to first worksheet")
             worksheet = sheet.sheet1
 
-        all_rows = worksheet.get_all_records()  
+        all_rows = worksheet.get_all_records()
 
-        columns = [c.lower() for c in all_rows[0].keys()]
+        # Use header row if there are no data rows to avoid IndexError
+        if not all_rows:
+            header_values = [c.lower() for c in worksheet.row_values(1)]
+            columns = header_values
+            if "sup name" not in columns:
+                return "The 'sup name' column isn't found."
+            return []
+        else:
+            columns = [c.lower() for c in all_rows[0].keys()]
 
         if "sup name" not in columns:
             return "The 'sup name' column isn't found."
@@ -90,9 +98,17 @@ def read_sup_domains(sup_domains_sheet_url):
             print("⚠️ No gid found in URL, defaulting to first worksheet")
             worksheet = sheet.sheet1
 
-        all_rows = worksheet.get_all_records()  
+        all_rows = worksheet.get_all_records()
 
-        columns = [c.lower() for c in all_rows[0].keys()]
+        # Use header row if there are no data rows to avoid IndexError
+        if not all_rows:
+            header_values = [c.lower() for c in worksheet.row_values(1)]
+            columns = header_values
+            if "sup domain" not in columns:
+                return "The 'sup domain' column isn't found."
+            return []
+        else:
+            columns = [c.lower() for c in all_rows[0].keys()]
 
         if "sup domain" not in columns:
             return "The 'sup domain' column isn't found."
@@ -131,9 +147,17 @@ def read_sup_emails(sup_emails_sheet_url):
             print("⚠️ No gid found in URL, defaulting to first worksheet")
             worksheet = sheet.sheet1
 
-        all_rows = worksheet.get_all_records()  
+        all_rows = worksheet.get_all_records()
 
-        columns = [c.lower() for c in all_rows[0].keys()]
+        # Use header row if there are no data rows to avoid IndexError
+        if not all_rows:
+            header_values = [c.lower() for c in worksheet.row_values(1)]
+            columns = header_values
+            if "email" not in columns:
+                return "The 'email' column isn't found."
+            return []
+        else:
+            columns = [c.lower() for c in all_rows[0].keys()]
 
         if "email" not in columns:
             return "The 'email' column isn't found."
@@ -172,9 +196,13 @@ def read_company_domains(sheet_url, is_company_geo_required):
             print("⚠️ No gid found in URL, defaulting to first worksheet")
             worksheet = sheet.sheet1
             
-        all_rows = worksheet.get_all_records()  
+        all_rows = worksheet.get_all_records()
 
-        columns = [c.lower() for c in all_rows[0].keys()]
+        # Use header row if there are no data rows to avoid IndexError
+        if not all_rows:
+            columns = [c.lower() for c in worksheet.row_values(1)]
+        else:
+            columns = [c.lower() for c in all_rows[0].keys()]
         
         domains = None
         country_names = None
@@ -230,9 +258,13 @@ def read_company_names(sheet_url, is_company_geo_required):
             print("⚠️ No gid found in URL, defaulting to first worksheet")
             worksheet = sheet.sheet1
             
-        all_rows = worksheet.get_all_records()  
+        all_rows = worksheet.get_all_records()
 
-        columns = [c.lower() for c in all_rows[0].keys()]
+        # Use header row if there are no data rows to avoid IndexError
+        if not all_rows:
+            columns = [c.lower() for c in worksheet.row_values(1)]
+        else:
+            columns = [c.lower() for c in all_rows[0].keys()]
         
         names = []
         country_names = []
@@ -292,9 +324,13 @@ def read_company_data_mixed(sheet_url):
             print("⚠️ No gid found in URL, defaulting to first worksheet")
             worksheet = sheet.sheet1
             
-        all_rows = worksheet.get_all_records()  
+        all_rows = worksheet.get_all_records()
 
-        columns = [c.lower() for c in all_rows[0].keys()]
+        # Use header row if there are no data rows to avoid IndexError
+        if not all_rows:
+            columns = [c.lower() for c in worksheet.row_values(1)]
+        else:
+            columns = [c.lower() for c in all_rows[0].keys()]
 
         existing_columns = []
         
