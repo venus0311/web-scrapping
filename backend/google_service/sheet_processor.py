@@ -28,6 +28,29 @@ buffer_locks: Dict[str, threading.Lock] = defaultdict(threading.Lock)
 def _make_key(sheet_url: str, tab_name: str) -> str:
     return f"{sheet_url}::{tab_name}"
 
+# Default header for output tabs (kept here to centralize schema/order)
+DEFAULT_OUTPUT_HEADER: List[str] = [
+    "Company Name",
+    "domain",
+    "employees",
+    "employees_prooflink",
+    "subindustry",
+    "industry",
+    "revenue",
+    "revenue_prooflink",
+    "first_name",
+    "last_name",
+    "title",
+    "prooflink",
+    "location",
+    "status",
+    "email",
+    "email_status",
+    "last_activity",
+    "date_range",
+    "company_id",
+]
+
 
 def _exponential_backoff_sleep(attempt: int):
     """Sleep for exponential backoff with jitter."""
@@ -163,6 +186,9 @@ def write_results_in_tab(
         # ensure header saved for this sheet/tab
         if key not in batch_headers and header is not None:
             batch_headers[key] = header
+            # Ensure worksheet and header exist immediately when we first know the header,
+            # so that even small batches (or on-exit flushes) have the header present.
+            _ensure_worksheet_and_header(sheet, tab_name, batch_headers[key])
 
         # ensure buffer is always a list
         if not isinstance(batch_buffers.get(key), list):
@@ -196,6 +222,24 @@ def write_results_in_tab(
         _append_rows_with_retries(worksheet, padded)
 
 
+def set_header_for_tab(sheet: gspread.Spreadsheet, tab_name: str, header: List[str]):
+    """
+    Public helper to enforce a specific header for a tab and cache it for batching.
+    """
+    key = _make_key(sheet.url, tab_name)
+    with buffer_locks[key]:
+        batch_headers[key] = header[:]  # store a copy to avoid accidental mutation
+    _ensure_worksheet_and_header(sheet, tab_name, header)
+
+
+def ensure_default_headers(sheet: gspread.Spreadsheet):
+    """
+    Ensure both 'result' and 'unsuitable' tabs exist with the default header.
+    """
+    set_header_for_tab(sheet, "result", DEFAULT_OUTPUT_HEADER)
+    set_header_for_tab(sheet, "unsuitable", DEFAULT_OUTPUT_HEADER)
+
+
 def flush_buffer(sheet: gspread.Spreadsheet, tab_name: str):
     key = _make_key(sheet.url, tab_name)
 
@@ -209,18 +253,12 @@ def flush_buffer(sheet: gspread.Spreadsheet, tab_name: str):
         if not buffer:
             return  # nothing to flush
 
-        # Get or create the worksheet
-        try:
-            worksheet = sheet.worksheet(tab_name)
-        except gspread.exceptions.WorksheetNotFound:
-            worksheet = sheet.add_worksheet(
-                title=tab_name,
-                rows=str(len(buffer) + 1),
-                cols=str(len(buffer[0])),
-            )
-            # Write header row if we have one
-            if key in batch_headers:
-                worksheet.append_row(batch_headers[key])
+        # Ensure worksheet exists and header row is present before appending data
+        worksheet = _ensure_worksheet_and_header(
+            sheet,
+            tab_name,
+            batch_headers.get(key, [])
+        )
 
         # Write buffered rows
         worksheet.append_rows(buffer)
