@@ -3,8 +3,12 @@ import json
 from fixed_data.industries import find_matching_industry
 from api_calls import get_search_results_by_serper
 from rapidfuzz import fuzz, process
+from api_calls import get_company_info_from_prooflink
 import re
+import os
 
+
+RAPIDAPI_KEY_VERIFY = os.getenv("RAPIDAPI_KEY_VERIFY")
 
 def get_company_info_from_names(company_names, country_names):
     """
@@ -44,12 +48,12 @@ def get_company_info_from_names(company_names, country_names):
 
                 find_link = company_best_link(company_name, links)
 
-                company_info = extract_company_info(best_match["snippet"])
+                company_info = get_company_info_from_prooflink(RAPIDAPI_KEY_VERIFY, best_match["link"])
 
                 # print(f"TTTTT {company_info}")
                 # print(f"........ {best_match["snippet"]}")
 
-                formatted_subindustry = title_case_except_and(company_info["industry"])
+                formatted_subindustry = title_case_except_and(" ".join(company_info["industries"]))
                 matched_industry = find_matching_industry(formatted_subindustry)
 
                 industries = matched_industry if matched_industry != "Unknown" else None
@@ -57,7 +61,7 @@ def get_company_info_from_names(company_names, country_names):
                 collected_data = {
                     "industry": industries,  
                     "subindustry": formatted_subindustry,          
-                    "employees": company_info["company_size"],
+                    "employees": company_info["employee_range"],
                     "link": find_link["url"],
                     "company": find_link["company"]
                 }

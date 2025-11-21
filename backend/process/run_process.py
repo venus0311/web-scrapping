@@ -334,7 +334,7 @@ def process_entry_logic(entry_id: str):
                         else:
                             linkedin_url = uniquq_links_and_names[unique_values[indx]]
 
-                            get_domain = get_company_domain(API_KEY, linkedin_url)
+                            get_domain = get_company_info_from_prooflink(API_KEY, linkedin_url).get("data")
                             
                             domain_from_name = get_domain.get("domain", None)
 
@@ -1255,46 +1255,8 @@ def process_entry_logic(entry_id: str):
                                         write_results_in_tab(sheet, suitable_results, unsuitable_results, "unsuitable", unsuitable_data)
                                         continue
                                 
-                                # Check lead activity 
+                                # Defer activity check until after email validation
                                 last_activity = "-"
-                                if linkedin_url and linkedin_url != "-": 
-                                    profile_activity = get_profile_activity(linkedin_url) 
-
-                                    if profile_activity == "No more credits for domain API" or profile_activity == "Subscription is suspended":
-                                        entry.status = "Failed"
-                                        entry.error_message = "Subscription is suspended. Contact admin for renewal"
-                                        db.commit()
-                                        db.refresh(entry)
-
-                                        raise Exception("Subscription is suspended. Contact admin for renewal")
-
-                                    last_activity = profile_activity.get("recent_activity_time", "-") 
-                                
-                                if last_activity:
-                                    if "yr" in last_activity.lower(): 
-                                        unsuitable_data = { 
-                                            "Company Name": comp_data['company_name'], 
-                                            "domain": comp_data['domain'], 
-                                            "employees": comp_data['employee_range'], 
-                                            "employees_prooflink": comp_data['employees_prooflink'], 
-                                            "subindustry": comp_data['subindustry'], 
-                                            "industry": comp_data['industry'], 
-                                            "revenue": comp_data['revenue'], 
-                                            "revenue_prooflink": comp_data['revenue_prooflink'], 
-                                            "first_name": first_name, 
-                                            "last_name": last_name, 
-                                            "title": title, 
-                                            "prooflink": linkedin_url, 
-                                            "location": location, 
-                                            "status": "activity", 
-                                            "email": "-", 
-                                            "email_status": "-", 
-                                            "last_activity": last_activity, 
-                                        } 
-                                        unsuitable_results.append(unsuitable_data) 
-                                        write_results_in_tab(sheet, suitable_results, unsuitable_results, "unsuitable", unsuitable_data) 
-                                        
-                                        continue 
 
                                 person_data = {
                                     "first_name": first_name,
@@ -1460,13 +1422,53 @@ def process_entry_logic(entry_id: str):
                                     "status": "",
                                     "email": email,
                                     "email_status": email_status,
-                                    "last_activity": person["last_activity"],
+                                    "last_activity": "-",
                                 }
 
                                 if email_status == "valid" or email_status == "accept_all":
-                                    suitable_results.append(scraped_data)
-                                    temp_lead_valid_count += 1
-                                    write_results_in_tab(sheet, suitable_results, unsuitable_results, "suitable", scraped_data)
+                                    # Now that we have a valid email, check lead activity
+                                    computed_last_activity = "-"
+                                    if person["linkedin_url"] and person["linkedin_url"] != "-":
+                                        profile_activity = get_profile_activity(person["linkedin_url"])
+
+                                        if profile_activity == "No more credits for domain API" or profile_activity == "Subscription is suspended":
+                                            entry.status = "Failed"
+                                            entry.error_message = "Subscription is suspended. Contact admin for renewal"
+                                            db.commit()
+                                            db.refresh(entry)
+                                            raise Exception("Subscription is suspended. Contact admin for renewal")
+
+                                        computed_last_activity = profile_activity.get("recent_activity_time", "-")
+
+                                    # If activity indicates years-old, mark as unsuitable due to activity
+                                    if computed_last_activity and "yr" in computed_last_activity.lower():
+                                        unsuitable_data = {
+                                            "Company Name": comp_data['company_name'],
+                                            "domain": comp_data['domain'],
+                                            "employees": comp_data['employee_range'],
+                                            "employees_prooflink": comp_data['employees_prooflink'],
+                                            "subindustry": comp_data['subindustry'],
+                                            "industry": comp_data['industry'],
+                                            "revenue": comp_data['revenue'],
+                                            "revenue_prooflink": comp_data['revenue_prooflink'],
+                                            "first_name": person["first_name"],
+                                            "last_name": person["last_name"],
+                                            "title": person["title"],
+                                            "prooflink": person["linkedin_url"],
+                                            "location": person["location"],
+                                            "status": "activity",
+                                            "email": email,
+                                            "email_status": email_status,
+                                            "last_activity": computed_last_activity,
+                                        }
+                                        unsuitable_results.append(unsuitable_data)
+                                        write_results_in_tab(sheet, suitable_results, unsuitable_results, "unsuitable", unsuitable_data)
+                                    else:
+                                        # Otherwise proceed as suitable with activity info
+                                        scraped_data["last_activity"] = computed_last_activity
+                                        suitable_results.append(scraped_data)
+                                        temp_lead_valid_count += 1
+                                        write_results_in_tab(sheet, suitable_results, unsuitable_results, "suitable", scraped_data)
                                 else:
                                     scraped_data["last_activity"] = "-"
                                     unsuitable_results.append(scraped_data)
