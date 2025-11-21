@@ -185,18 +185,13 @@ def read_company_domains(sheet_url, is_company_geo_required):
 
         # Extract spreadsheet ID and gid from URL
         spreadsheet_id = re.search(r"/d/([a-zA-Z0-9-_]+)", sheet_url).group(1)
-        gid_match = re.search(r"gid=([0-9]+)", sheet_url)
-        gid = int(gid_match.group(1)) if gid_match else None
-
         sheet = gc.open_by_key(spreadsheet_id)
+        gid = find_nac_sheet(sheet)
 
-        if gid:
-            worksheet = sheet.get_worksheet_by_id(gid)
-        else:
-            print("⚠️ No gid found in URL, defaulting to first worksheet")
-            worksheet = sheet.sheet1
-            
-        all_rows = worksheet.get_all_records()
+        worksheet = sheet.get_worksheet_by_id(gid)
+        
+        all_rows = worksheet.get_all_records()  
+
 
         # Use header row if there are no data rows to avoid IndexError
         if not all_rows:
@@ -247,18 +242,13 @@ def read_company_names(sheet_url, is_company_geo_required):
 
         # Extract spreadsheet ID and gid from URL
         spreadsheet_id = re.search(r"/d/([a-zA-Z0-9-_]+)", sheet_url).group(1)
-        gid_match = re.search(r"gid=([0-9]+)", sheet_url)
-        gid = int(gid_match.group(1)) if gid_match else None
-
         sheet = gc.open_by_key(spreadsheet_id)
+        gid = find_nac_sheet(sheet)
 
-        if gid:
-            worksheet = sheet.get_worksheet_by_id(gid)
-        else:
-            print("⚠️ No gid found in URL, defaulting to first worksheet")
-            worksheet = sheet.sheet1
-            
-        all_rows = worksheet.get_all_records()
+        worksheet = sheet.get_worksheet_by_id(gid)
+       
+        all_rows = worksheet.get_all_records()  
+
 
         # Use header row if there are no data rows to avoid IndexError
         if not all_rows:
@@ -313,24 +303,19 @@ def read_company_data_mixed(sheet_url):
 
         # Extract spreadsheet ID and gid from URL
         spreadsheet_id = re.search(r"/d/([a-zA-Z0-9-_]+)", sheet_url).group(1)
-        gid_match = re.search(r"gid=([0-9]+)", sheet_url)
-        gid = int(gid_match.group(1)) if gid_match else None
 
         sheet = gc.open_by_key(spreadsheet_id)
+        gid = find_nac_sheet(sheet)
+        print("gid ::::::::::::::", gid)
+        worksheet = sheet.get_worksheet_by_id(gid)
+        print("worksheet ::::::::::::::", worksheet)
 
-        if gid:
-            worksheet = sheet.get_worksheet_by_id(gid)
-        else:
-            print("⚠️ No gid found in URL, defaulting to first worksheet")
-            worksheet = sheet.sheet1
-            
-        all_rows = worksheet.get_all_records()
+        all_rows = worksheet.get_all_records()  
 
-        # Use header row if there are no data rows to avoid IndexError
-        if not all_rows:
-            columns = [c.lower() for c in worksheet.row_values(1)]
-        else:
-            columns = [c.lower() for c in all_rows[0].keys()]
+        print(f"ALL ROWS :::: {all_rows}")
+
+        columns = [c.lower() for c in all_rows[0].keys()]
+
 
         existing_columns = []
         
@@ -347,9 +332,19 @@ def read_company_data_mixed(sheet_url):
              existing_columns.append("domain")
 
         response["existing_columns"] = existing_columns
+        print("response ::::::::::::::", response)
 
         return response
 
     except Exception as e:
         print(f"❌ Error reading companies: {e}")
         raise RuntimeError(f"Failed to read companies: {e}")
+
+def find_nac_sheet(sheet):
+    """
+    Find nac sheet in the sheet.
+    """
+    for worksheet in sheet.worksheets():
+        if worksheet.title.lower() == "nac":
+            return worksheet.id
+    raise RuntimeError("Nac sheet not found")
